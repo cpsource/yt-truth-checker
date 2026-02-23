@@ -40,6 +40,9 @@ Hover over any YouTube video title for ~1 second and get an instant verdict.
   view count, and upload date before calling Claude. This gives significantly richer
   context for a more accurate verdict. A 🔍 Deep Search badge appears at the bottom
   of the tooltip when metadata was successfully fetched.
+- **Copy to clipboard:** A 📋 button in the tooltip footer copies the verdict,
+  confidence, summary, and red flags (as bullet points) to the clipboard. The tooltip
+  stays open while you move the cursor to click it.
 - Results are cached for the session — hovering the same title again is instant.
 
 ## How It Works
