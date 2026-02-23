@@ -8,13 +8,14 @@
   let tooltip = null;
   let hoverTimer = null;
   let currentTitle = null;
-  let settings = { apiKey: '', enableHover: true };
+  let settings = { apiKey: '', enableHover: true, deepSearch: false };
 
   // ── Settings ───────────────────────────────────────────────────
   function loadSettings(cb) {
-    chrome.storage.local.get(['apiKey', 'enableHover'], (data) => {
+    chrome.storage.local.get(['apiKey', 'enableHover', 'enableDeepSearch'], (data) => {
       if (data.apiKey) settings.apiKey = data.apiKey;
       if (data.enableHover !== undefined) settings.enableHover = data.enableHover;
+      if (data.enableDeepSearch !== undefined) settings.deepSearch = data.enableDeepSearch;
       if (cb) cb();
     });
   }
@@ -22,6 +23,7 @@
   chrome.storage.onChanged.addListener((changes) => {
     if (changes.apiKey) settings.apiKey = changes.apiKey.newValue || '';
     if (changes.enableHover) settings.enableHover = changes.enableHover.newValue;
+    if (changes.enableDeepSearch) settings.deepSearch = changes.enableDeepSearch.newValue;
   });
 
   // ── Tooltip ────────────────────────────────────────────────────
@@ -54,13 +56,18 @@
       '</div>';
     }
 
+    const deepBadge = result._deepSearched
+      ? '<span class="ytc-deep-badge">&#x1F50D; Deep Search</span>'
+      : '';
+
     t.innerHTML =
       '<div class="ytc-verdict-bar">' +
         '<span class="ytc-verdict-label">' + verdictIcon(verdict) + ' ' + esc(verdict) + '</span>' +
         '<span class="ytc-confidence">' + esc(result.confidence || 'unknown') + ' confidence</span>' +
       '</div>' +
       '<div class="ytc-summary">' + esc(result.summary || 'No summary available.') + '</div>' +
-      flagsHtml;
+      flagsHtml +
+      deepBadge;
 
     positionTooltip(anchorEl);
     requestAnimationFrame(() => t.classList.add('ytc-visible'));
@@ -133,14 +140,16 @@
     var text = (titleLink.textContent || '').trim();
     if (text.length < 10) return null;
 
-    return { text: text, element: titleLink, renderer: renderer };
+    return { text: text, element: titleLink, renderer: renderer, url: titleLink.href };
   }
 
   // ── API Call ────────────────────────────────────────────────────
-  function checkTitle(title) {
+  function checkTitle(title, videoUrl) {
     return new Promise(function(resolve, reject) {
+      const msg = { action: 'checkTitle', title: title };
+      if (settings.deepSearch && videoUrl) msg.videoUrl = videoUrl;
       chrome.runtime.sendMessage(
-        { action: 'checkTitle', title: title },
+        msg,
         function(response) {
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
@@ -190,7 +199,7 @@
 
       showLoading(info.element);
 
-      checkTitle(info.text).then(function(result) {
+      checkTitle(info.text, info.url).then(function(result) {
         cache.set(info.text, result);
         if (currentTitle === info.text) {
           showResult(result, info.element);

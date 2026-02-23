@@ -3,16 +3,47 @@
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'checkTitle') {
-    chrome.storage.local.get('apiKey', ({ apiKey }) => {
-      handleCheck(request.title, apiKey)
-        .then(result => sendResponse({ success: true, result }))
+    chrome.storage.local.get(['apiKey', 'enableDeepSearch'], async ({ apiKey, enableDeepSearch }) => {
+      let videoMeta = null;
+      if (enableDeepSearch && request.videoUrl) {
+        videoMeta = await fetchVideoMeta(request.videoUrl).catch(() => null);
+      }
+      handleCheck(request.title, apiKey, videoMeta)
+        .then(result => sendResponse({ success: true, result: { ...result, _deepSearched: !!videoMeta } }))
         .catch(err => sendResponse({ success: false, error: err.message }));
     });
     return true; // keep channel open for async
   }
 });
 
-async function handleCheck(title, apiKey) {
+async function fetchVideoMeta(videoUrl) {
+  const res = await fetch(videoUrl);
+  const html = await res.text();
+  // uploadDate from JSON-LD
+  let uploadDate = '';
+  const ldIdx = html.indexOf('application/ld+json');
+  if (ldIdx !== -1) {
+    const jsonStart = html.indexOf('>', ldIdx) + 1;
+    const jsonEnd = html.indexOf('</script>', jsonStart);
+    if (jsonEnd !== -1) {
+      try {
+        const ld = JSON.parse(html.substring(jsonStart, jsonEnd).trim());
+        uploadDate = ld.uploadDate || '';
+      } catch (e) {}
+    }
+  }
+
+  // description and viewCount from ytInitialPlayerResponse
+  const descMatch = html.match(/"shortDescription":"((?:[^"\\]|\\.)*)"/);
+  const viewMatch = html.match(/"viewCount":"(\d+)"/);
+  const description = descMatch ? JSON.parse('"' + descMatch[1] + '"') : '';
+  const viewCount   = viewMatch ? viewMatch[1] : '';
+
+  if (!uploadDate && !description && !viewCount) return null;
+  return { description, uploadDate, viewCount };
+}
+
+async function handleCheck(title, apiKey, videoMeta = null) {
   const systemPrompt = `You are a headline truth-checker. Given a YouTube video title, assess whether the claim in the headline is likely TRUE, FALSE, MISLEADING, CLICKBAIT, or OPINION.
 
 Respond in this exact JSON format and nothing else:
@@ -43,10 +74,15 @@ Focus on the literal claim. Flag emotional manipulation language. Be concise.`;
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 300,
+      max_tokens: 500,
       system: systemPrompt,
       messages: [
-        { role: 'user', content: `Analyze this YouTube video title:\n\n"${title}"` }
+        {
+          role: 'user',
+          content: videoMeta
+            ? `Analyze this YouTube video title:\n\n"${title}"\n\nAdditional context:\nUpload date: ${videoMeta.uploadDate}\nViews: ${videoMeta.viewCount}\nDescription: ${videoMeta.description}`
+            : `Analyze this YouTube video title:\n\n"${title}"`
+        }
       ]
     })
   });

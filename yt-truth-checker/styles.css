@@ -119,6 +119,15 @@
   letter-spacing: 0.3px;
 }
 
+.ytc-deep-badge {
+  display: block;
+  padding: 5px 16px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: #555;
+}
+
 /* Error state */
 .ytc-tooltip.ytc-error {
   background: #1a1d24;

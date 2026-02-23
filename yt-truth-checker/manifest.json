@@ -5,7 +5,8 @@
   "description": "Hover over YouTube video titles to get an AI-powered truth/fiction analysis via Claude.",
   "permissions": ["storage"],
   "host_permissions": [
-    "https://api.anthropic.com/*"
+    "https://api.anthropic.com/*",
+    "https://www.youtube.com/*"
   ],
   "content_scripts": [
     {
