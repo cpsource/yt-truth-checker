@@ -1,15 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
   const apiKeyInput = document.getElementById('apiKey');
   const enableHover = document.getElementById('enableHover');
-  const autoCheck = document.getElementById('autoCheck');
   const saveBtn = document.getElementById('save');
   const status = document.getElementById('status');
 
   // Load saved settings
-  chrome.storage.local.get(['apiKey', 'enableHover', 'autoCheck'], (data) => {
+  chrome.storage.local.get(['apiKey', 'enableHover'], (data) => {
     if (data.apiKey) apiKeyInput.value = data.apiKey;
     if (data.enableHover !== undefined) enableHover.checked = data.enableHover;
-    if (data.autoCheck !== undefined) autoCheck.checked = data.autoCheck;
   });
 
   saveBtn.addEventListener('click', () => {
@@ -27,8 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     chrome.storage.local.set({
       apiKey: key,
-      enableHover: enableHover.checked,
-      autoCheck: autoCheck.checked
+      enableHover: enableHover.checked
     }, () => {
       status.style.color = '#4caf50';
       status.textContent = 'Settings saved ✓';

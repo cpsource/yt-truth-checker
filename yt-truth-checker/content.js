@@ -8,14 +8,13 @@
   let tooltip = null;
   let hoverTimer = null;
   let currentTitle = null;
-  let settings = { apiKey: '', enableHover: true, autoCheck: false };
+  let settings = { apiKey: '', enableHover: true };
 
   // ── Settings ───────────────────────────────────────────────────
   function loadSettings(cb) {
-    chrome.storage.local.get(['apiKey', 'enableHover', 'autoCheck'], (data) => {
+    chrome.storage.local.get(['apiKey', 'enableHover'], (data) => {
       if (data.apiKey) settings.apiKey = data.apiKey;
       if (data.enableHover !== undefined) settings.enableHover = data.enableHover;
-      if (data.autoCheck !== undefined) settings.autoCheck = data.autoCheck;
       if (cb) cb();
     });
   }
@@ -23,7 +22,6 @@
   chrome.storage.onChanged.addListener((changes) => {
     if (changes.apiKey) settings.apiKey = changes.apiKey.newValue || '';
     if (changes.enableHover) settings.enableHover = changes.enableHover.newValue;
-    if (changes.autoCheck) settings.autoCheck = changes.autoCheck.newValue;
   });
 
   // ── Tooltip ────────────────────────────────────────────────────
