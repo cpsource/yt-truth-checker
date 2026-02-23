@@ -3,9 +3,11 @@
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'checkTitle') {
-    handleCheck(request.title, request.apiKey)
-      .then(result => sendResponse({ success: true, result }))
-      .catch(err => sendResponse({ success: false, error: err.message }));
+    chrome.storage.local.get('apiKey', ({ apiKey }) => {
+      handleCheck(request.title, apiKey)
+        .then(result => sendResponse({ success: true, result }))
+        .catch(err => sendResponse({ success: false, error: err.message }));
+    });
     return true; // keep channel open for async
   }
 });

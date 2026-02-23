@@ -140,7 +140,7 @@
   function checkTitle(title) {
     return new Promise(function(resolve, reject) {
       chrome.runtime.sendMessage(
-        { action: 'checkTitle', title: title, apiKey: settings.apiKey },
+        { action: 'checkTitle', title: title },
         function(response) {
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
