@@ -119,13 +119,36 @@
   letter-spacing: 0.3px;
 }
 
+.ytc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 10px;
+}
+
 .ytc-deep-badge {
-  display: block;
-  padding: 5px 16px 10px;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.4px;
   color: #555;
+}
+
+.ytc-copy-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  opacity: 0.4;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: opacity 0.15s;
+  line-height: 1;
+}
+
+.ytc-copy-btn:hover {
+  opacity: 1;
+  background: rgba(255,255,255,0.06);
 }
 
 /* Error state */

@@ -7,6 +7,7 @@
   const cache = new Map();
   let tooltip = null;
   let hoverTimer = null;
+  let hideTimer = null;
   let currentTitle = null;
   let settings = { apiKey: '', enableHover: true, deepSearch: false };
 
@@ -67,7 +68,24 @@
       '</div>' +
       '<div class="ytc-summary">' + esc(result.summary || 'No summary available.') + '</div>' +
       flagsHtml +
-      deepBadge;
+      '<div class="ytc-footer">' +
+        deepBadge +
+        '<button class="ytc-copy-btn" title="Copy to clipboard">\uD83D\uDCCB</button>' +
+      '</div>';
+
+    t.querySelector('.ytc-copy-btn').addEventListener('click', function(e) {
+      e.stopPropagation();
+      var flags = (result.red_flags && result.red_flags.length)
+        ? '\nFlags:\n' + result.red_flags.map(function(f) { return '\u2022 ' + f; }).join('\n')
+        : '';
+      var text = verdict + ' (' + (result.confidence || 'unknown') + ' confidence)\n' +
+        (result.summary || '') + flags;
+      navigator.clipboard.writeText(text).then(function() {
+        var btn = t.querySelector('.ytc-copy-btn');
+        btn.textContent = '\u2713';
+        setTimeout(function() { btn.textContent = '\uD83D\uDCCB'; }, 1500);
+      });
+    });
 
     positionTooltip(anchorEl);
     requestAnimationFrame(() => t.classList.add('ytc-visible'));
@@ -81,6 +99,18 @@
 
   function hideTooltip() {
     if (tooltip) tooltip.classList.remove('ytc-visible');
+  }
+
+  function scheduleHide() {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(function() {
+      hideTooltip();
+      currentTitle = null;
+    }, 300);
+  }
+
+  function cancelHide() {
+    clearTimeout(hideTimer);
   }
 
   function positionTooltip(anchorEl) {
@@ -214,22 +244,33 @@
     }, 800);
   });
 
+  document.addEventListener('mouseover', function(e) {
+    if (tooltip && tooltip.contains(e.target)) {
+      cancelHide();
+    }
+  });
+
   document.addEventListener('mouseout', function(e) {
+    // Leaving the tooltip itself
+    if (tooltip && tooltip.contains(e.target) && !tooltip.contains(e.relatedTarget)) {
+      scheduleHide();
+      return;
+    }
+
     var leaving = findTitleInfo(e.target);
     var entering = e.relatedTarget ? findTitleInfo(e.relatedTarget) : null;
 
-    // Only hide if we're leaving a title area and not entering another title
     if (leaving && !entering) {
       clearTimeout(hoverTimer);
-      hideTooltip();
-      currentTitle = null;
+      scheduleHide();
     }
   });
 
   window.addEventListener('scroll', function() {
+    clearTimeout(hoverTimer);
+    cancelHide();
     hideTooltip();
     currentTitle = null;
-    clearTimeout(hoverTimer);
   }, { passive: true });
 
   // ── Init ───────────────────────────────────────────────────────
