@@ -74,6 +74,25 @@ yt-truth-checker/
 └── README.md          # This file
 ```
 
+## Building a Release
+
+From the repo root:
+
+```bash
+make release
+```
+
+This packages the `yt-truth-checker/` directory into a versioned zip file
+(e.g. `yt-truth-checker-v1.0.zip`) ready to upload to the Chrome Web Store.
+
+To remove built zips:
+
+```bash
+make clean
+```
+
+The version number is read automatically from `manifest.json`.
+
 ## Notes
 
 - Only works on youtube.com
