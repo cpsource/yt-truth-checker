@@ -74,6 +74,10 @@ yt-truth-checker/
 └── README.md          # This file
 ```
 
+## Download
+
+Pre-built releases are available on the [GitHub Releases page](https://github.com/cpsource/yt-truth-checker/releases).
+
 ## Building a Release
 
 From the repo root:
