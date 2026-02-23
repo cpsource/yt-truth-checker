@@ -28,20 +28,23 @@ Hover over any YouTube video title for ~1 second and get an instant verdict.
 3. **Configure:**
    - Click the extension icon in your toolbar (puzzle piece → pin it)
    - Paste your Anthropic API key
-   - Toggle hover mode on/off
-   - Optionally enable auto-check (scans all visible titles on page load)
+   - Toggle **Enable on hover** on/off
+   - Optionally enable **Deep Search** for richer analysis
    - Click **Save Settings**
 
 ## Usage
 
 - **Hover mode (default):** Pause your mouse over any YouTube video title for ~1 second.
   A tooltip appears with Claude's assessment.
-- **Auto-check mode:** When you load a YouTube page, all visible titles get checked
-  automatically and small colored badges appear on thumbnails.
+- **Deep Search mode:** When enabled, the extension fetches the video's description,
+  view count, and upload date before calling Claude. This gives significantly richer
+  context for a more accurate verdict. A 🔍 Deep Search badge appears at the bottom
+  of the tooltip when metadata was successfully fetched.
 - Results are cached for the session — hovering the same title again is instant.
 
 ## How It Works
 
+**Standard mode:**
 ```
 You hover on title → content.js detects it (800ms debounce)
   → sends message to background.js
@@ -51,11 +54,23 @@ You hover on title → content.js detects it (800ms debounce)
   → tooltip displayed + badge on thumbnail
 ```
 
+**Deep Search mode:**
+```
+You hover on title → content.js detects it (800ms debounce)
+  → sends title + video URL to background.js
+    → background.js fetches the YouTube video page
+      → extracts description, view count, upload date
+    → calls Anthropic API with enriched prompt
+      → Claude analyzes headline + full context
+    → result sent back to content.js
+  → tooltip displayed with 🔍 Deep Search badge
+```
+
 ## Cost
 
-Each check uses Claude Sonnet (~200-300 tokens output).
-At current pricing that's roughly $0.001-0.002 per check.
-A thousand checks ≈ $1-2.
+Each standard check uses ~300-500 tokens. Deep Search adds the video description
+to the prompt, typically 500-1500 extra input tokens (~$0.001 more per check).
+At current pricing, a thousand checks ≈ $1-3 depending on Deep Search usage.
 
 ## Files
 
@@ -101,6 +116,7 @@ The version number is read automatically from `manifest.json`.
 
 - Only works on youtube.com
 - Requires an Anthropic API key (not free, but very cheap per check)
-- Claude judges based on the headline text alone — it doesn't watch the video
+- In standard mode, Claude judges based on the headline text alone — it doesn't watch the video
+- With Deep Search, Claude also sees the description, view count, and upload date
 - The model has a knowledge cutoff, so very recent events may get "UNVERIFIABLE"
 - Uses Claude Sonnet for speed + cost balance
